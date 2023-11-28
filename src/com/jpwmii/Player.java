@@ -29,11 +29,9 @@ public class Player {
     private final int marioHeight = 112;
     private boolean canMoveRight = true;
     private boolean canMoveLeft = true;
+    private int coins = 0;
 
     Player(){}
-    Player(int lives) {
-        this.lives = lives;
-    }
 
     public void loadMarioFrames(java.net.URL imageUrl) throws IOException {
         BufferedImage marioImage = javax.imageio.ImageIO.read(imageUrl);
@@ -80,6 +78,7 @@ public class Player {
                 }
             }
             else {
+                System.out.println(y + " " + groundLevelBig);
                 if (y >= groundLevelBig) {
                     isJumping = false;
                     y = groundLevelBig;
@@ -146,6 +145,7 @@ public class Player {
     }
 
     public void setGroundLevel(int x) {
+        System.out.println(x);
         groundLevelSmall = x;
         groundLevelBig = x - 55;
     }
@@ -161,10 +161,11 @@ public class Player {
     }
 
     public int getHeight() {
+        System.out.println(isSmall);
         if(isSmall)
             return marioWidth;
         else
-            return marioHeight;
+            return marioHeight + 26;
     }
 
     public void setCanMoveLeft(boolean canMoveLeft) {
@@ -176,8 +177,20 @@ public class Player {
         return y;
     }
 
+    public int getX() {
+        return x;
+    }
+
     public int getLives() {
         return lives;
+    }
+
+    public void addCoin() {
+        coins++;
+    }
+
+    public int getCoins() {
+        return coins;
     }
 
     public void setIsJumping(boolean isJumping) {

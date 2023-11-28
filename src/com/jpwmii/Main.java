@@ -1,6 +1,7 @@
 package com.jpwmii;
 
 import javax.swing.*;
+import java.io.IOException;
 
 public class Main {
 
@@ -11,7 +12,12 @@ public class Main {
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setResizable(false);
 
-            GamePanel gamePanel = new GamePanel();
+            GamePanel gamePanel = null;
+            try {
+                gamePanel = new GamePanel();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             frame.add(gamePanel);
 
             frame.setVisible(true);

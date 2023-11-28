@@ -15,24 +15,25 @@ public abstract class CollidableGameObject extends GameObject {
 
     public void isNextToPlayerRight(Player player) {
         if(!isBenethPlayer)
-            player.setCanMoveRight(player.getBounds() == null || !player.getBounds().intersects(new Rectangle(x - 7, y + height, 7, height)));
+            player.setCanMoveRight(player.getBounds() == null || !player.getBounds().intersects(new Rectangle(x - 7, y, width, height - 10)));
     }
 
     public void isNextToPlayerLeft(Player player) {
         if(!isBenethPlayer)
-            player.setCanMoveLeft(player.getBounds() == null || !player.getBounds().intersects(new Rectangle(x + width + 7, y + height, 7, height)));
+            player.setCanMoveLeft(player.getBounds() == null || !player.getBounds().intersects(new Rectangle(x + 7, y, width, height - 10)));
     }
-
     public void isBenethPlayer(Player player) {
-        if(player.getBounds() != null && player.getBounds().intersects(new Rectangle(x, y, width, height))) {
-            player.setGroundLevel(y - player.getHeight());
+        if(player.getBounds() != null && player.getBounds().intersects(new Rectangle(x , y- 50 , width, 50))) {
+            player.setGroundLevel(y - 57);
             isBenethPlayer = true;
+
         }
     }
 
     public void isNotBeneathPlayer(Player player) {
         if(isBenethPlayer){
-            if(player.getBounds() != null && !player.getBounds().intersects(new Rectangle(x, y, width, height))) {
+            if(player.getBounds() != null && !player.getBounds().intersects(new Rectangle(x, y - 50, width, 50))) {
+                System.out.println("not beneath");
                 player.setIsJumping(true);
                 player.resetGroundLevel();
                 isBenethPlayer = false;

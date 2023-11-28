@@ -2,15 +2,16 @@ package com.jpwmii.gameObjects;
 
 import com.jpwmii.Player;
 
-import javax.swing.*;
-import java.util.Objects;
+import java.awt.*;
 
-public class Coin extends GameObject {
-    public Coin(int x, int y) {
-        super(x, y, 32, 32, new ImageIcon(Objects.requireNonNull(Coin.class.getResource("../resources/coin.png"))).getImage());
+public class Coin extends AnimatedGameObject {
+
+    public Coin(int x, int y, Image[] frames) {
+        super(x, y, 40, 40, frames);
     }
 
+    @Override
     public void intersectsWithPlayer(Player player) {
-//        player.addCoin();
+        player.addCoin();
     }
 }

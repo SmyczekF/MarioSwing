@@ -3,6 +3,8 @@ package com.jpwmii;
 import com.jpwmii.gameCollidableObjects.CollidableGameObject;
 import com.jpwmii.gameCollidableObjects.Hole;
 import com.jpwmii.gameCollidableObjects.Pipe;
+import com.jpwmii.gameObjects.AnimatedGameObject;
+import com.jpwmii.gameObjects.Coin;
 import com.jpwmii.gameObjects.GameObject;
 import com.jpwmii.gameObjects.Mushroom;
 import com.jpwmii.interfaceObjects.Heart;
@@ -13,6 +15,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -24,10 +27,24 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
     private final Image floorTexture;
     private final Player player;
     private final ArrayList<GameObject> gameObjects = new ArrayList<>();
+    private final ArrayList<AnimatedGameObject> animatedGameObjects = new ArrayList<>();
     private int backgroundX = 0; // X-coordinate of the background
     private int floorX = 0; // Y-coordinate of the floor
     private final ArrayList<CollidableGameObject> collidableGameObjects = new ArrayList<>();
     private final ArrayList<Heart> hearts = new ArrayList<>();
+    private final Image[] coinFrames = new Image[6];
+
+    public void loadCoinFrames(java.net.URL imageUrl) throws IOException {
+        BufferedImage coinImage = javax.imageio.ImageIO.read(imageUrl);
+        int gapFromTheTop = 52;
+        int gapBetweenFrames = 23;
+        int coinWidth = 96;
+        int coinHeight = 96;
+        int startingGap = 5;
+        for (int i = 0; i < 6; i++) {
+            coinFrames[i] = coinImage.getSubimage(i * (coinWidth + gapBetweenFrames) + startingGap, gapFromTheTop, coinWidth, coinHeight);
+        }
+    }
 
     private void resetWorld() {
         backgroundX = 0;
@@ -35,18 +52,26 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
         gameObjects.clear();
         collidableGameObjects.clear();
 
-        collidableGameObjects.add(new Hole(500, 200));
-        collidableGameObjects.add(new Pipe(200, 100, 100));
+
         hearts.add(new Heart(10, 20));
         hearts.add(new Heart(70, 20));
         hearts.add(new Heart(130, 20));
+        animatedGameObjects.add(new Coin(300, 430, coinFrames));
+        animatedGameObjects.add(new Coin(360, 430, coinFrames));
+        animatedGameObjects.add(new Coin(420, 430, coinFrames));
+        animatedGameObjects.add(new Coin(480, 430, coinFrames));
+        collidableGameObjects.add(new Hole(550, 150));
+        collidableGameObjects.add(new Pipe(900, 100, 100));
+        collidableGameObjects.add(new Pipe(1050, 100, 200));
+        collidableGameObjects.add(new Pipe(1200, 100, 300));
+        gameObjects.add(new Mushroom(200, 300));
     }
 
     private void initializeObjects() {
         resetWorld();
     }
 
-    public GamePanel() {
+    public GamePanel() throws IOException {
         timer = new Timer(50, this);
         timer.start();
         addKeyListener(this);
@@ -58,6 +83,7 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
 
         player = new Player();
 
+        loadCoinFrames(getClass().getResource("resources/coin.png"));
 
         initializeObjects();
 
@@ -91,16 +117,24 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
             gameObject.draw(g);
             if(gameObject.checkIntersectWithPlayer(player)) iterator.remove();
         }
-        if(collidableGameObjects.size() > 0){
-            collidableGameObjects.forEach(collidableGameObject -> {
-                collidableGameObject.draw(g);
-                collidableGameObject.isNextToPlayerRight(player);
-                collidableGameObject.isNextToPlayerLeft(player);
-                collidableGameObject.isBenethPlayer(player);
-                collidableGameObject.isNotBeneathPlayer(player);
-            });
+        Iterator<AnimatedGameObject> animatedGameObjectIterator = animatedGameObjects.iterator();
+        while(animatedGameObjectIterator.hasNext()){
+            AnimatedGameObject animatedGameObject = animatedGameObjectIterator.next();
+            animatedGameObject.draw(g);
+            if(animatedGameObject.checkIntersectWithPlayer(player)) animatedGameObjectIterator.remove();
         }
+        collidableGameObjects.forEach(collidableGameObject -> {
+            collidableGameObject.draw(g);
+            collidableGameObject.isNextToPlayerRight(player);
+            collidableGameObject.isNextToPlayerLeft(player);
+            collidableGameObject.isBenethPlayer(player);
+            collidableGameObject.isNotBeneathPlayer(player);
+        });
         player.draw(g);
+
+        g.drawImage(coinFrames[0], 10, 80, 50, 50, this);
+        g.setFont(new Font("TimesRoman", Font.PLAIN, 50));
+        g.drawString("x " + player.getCoins(), 70, 120);
 
         if(player.getLives() > 0){
             for(int i = 0; i < player.getLives(); i++){
@@ -138,6 +172,7 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
             }
             gameObjects.forEach(gameObject -> gameObject.update(gameObject.getX() - 7, gameObject.getY()));
             collidableGameObjects.forEach(collidableGameObject -> collidableGameObject.update(collidableGameObject.getX() - 7, collidableGameObject.getY()));
+            animatedGameObjects.forEach(animatedGameObject -> animatedGameObject.update(animatedGameObject.getX() - 7, animatedGameObject.getY()));
         }
         // Move background backward (left) when 'A' is pressed
         if (player.isWalkingLeft()) {
@@ -151,7 +186,10 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
             }
             gameObjects.forEach(gameObject -> gameObject.update(gameObject.getX() + 7, gameObject.getY()));
             collidableGameObjects.forEach(collidableGameObject -> collidableGameObject.update(collidableGameObject.getX() + 7, collidableGameObject.getY()));
+            animatedGameObjects.forEach(animatedGameObject -> animatedGameObject.update(animatedGameObject.getX() + 7, animatedGameObject.getY()));
         }
+        animatedGameObjects.forEach(AnimatedGameObject::updateAnimation);
+
 
         repaint();
     }

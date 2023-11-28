@@ -19,6 +19,7 @@ public abstract class GameObject {
     }
 
     public void draw(Graphics g) {
+
         g.drawImage(image, x, y, width, height, null);
     }
 
@@ -35,7 +36,10 @@ public abstract class GameObject {
         return false;
     };
 
-    public void intersectsWithPlayer(Player player){};
+
+    public void intersectsWithPlayer(Player player){
+        //empty body in case of colloidal objects, which do not intent to intersect with player
+    };
 
     public Rectangle getBounds() {
         return new Rectangle(x, y, width, height);
