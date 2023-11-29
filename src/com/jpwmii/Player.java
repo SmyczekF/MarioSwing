@@ -27,8 +27,6 @@ public class Player {
     private int jumpHeight = 0;
     private final int marioWidth = 57;
     private final int marioHeight = 112;
-    private boolean canMoveRight = true;
-    private boolean canMoveLeft = true;
     private int coins = 0;
 
     Player(){}
@@ -95,13 +93,11 @@ public class Player {
     }
 
     public void moveForward() {
-        if(canMoveRight) isWalkingRight = true;
-        else isWalkingRight = false;
+        isWalkingRight = true;
     }
 
     public void moveBackward() {
-        if(canMoveLeft) isWalkingLeft = true;
-        else isWalkingLeft = false;
+        isWalkingLeft = true;
     }
 
     public void jump() {
@@ -155,22 +151,12 @@ public class Player {
         groundLevelBig = BASE_Y - 55;
     }
 
-    public void setCanMoveRight(boolean canMoveRight) {
-        this.canMoveRight = canMoveRight;
-        if(!canMoveRight) isWalkingRight = false;
-    }
-
     public int getHeight() {
         System.out.println(isSmall);
         if(isSmall)
             return marioWidth;
         else
             return marioHeight + 26;
-    }
-
-    public void setCanMoveLeft(boolean canMoveLeft) {
-        this.canMoveLeft = canMoveLeft;
-        if(!canMoveLeft) isWalkingLeft = false;
     }
 
     public int getY() {
@@ -198,7 +184,7 @@ public class Player {
     }
 
     public void death() {
-        lives--;
+        lives = 0;
         x = 50;
         y = 430;
         isJumping = false;
@@ -207,8 +193,23 @@ public class Player {
         isSmall = true;
         jumpHeight = 0;
         currentFrame = 0;
-        canMoveRight = true;
-        canMoveLeft = true;
+        coins = 0;
+        resetGroundLevel();
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getCurrentGroundLevel(){
+        if(isSmall)
+            return groundLevelSmall;
+        else
+            return groundLevelBig;
+    }
+
+    public void looseLife() {
+        lives--;
     }
 
     public void printPlayerInfo() {
@@ -221,13 +222,14 @@ public class Player {
         System.out.println("isSmall: " + isSmall);
         System.out.println("jumpHeight: " + jumpHeight);
         System.out.println("currentFrame: " + currentFrame);
-        System.out.println("canMoveRight: " + canMoveRight);
-        System.out.println("canMoveLeft: " + canMoveLeft);
         System.out.println("groundLevelSmall: " + groundLevelSmall);
         System.out.println("groundLevelBig: " + groundLevelBig);
     }
 
     public Rectangle getBounds() {
-        return new Rectangle(x, y, marioWidth, marioHeight);
+        if(isSmall)
+            return new Rectangle(x, y, marioWidth, marioWidth);
+        else
+            return new Rectangle(x, y, marioWidth, marioHeight);
     }
 }

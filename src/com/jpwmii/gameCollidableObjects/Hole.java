@@ -12,11 +12,13 @@ public class Hole extends CollidableGameObject{
     }
 
     @Override
-    public void isNextToPlayerRight(Player player) {
+    public boolean isNextToPlayerRight(Player player) {
+        return false;
     }
 
     @Override
-    public void isNextToPlayerLeft(Player player) {
+    public boolean isNextToPlayerLeft(Player player) {
+        return false;
     }
 
     @Override

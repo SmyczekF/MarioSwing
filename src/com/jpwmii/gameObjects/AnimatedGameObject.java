@@ -1,15 +1,14 @@
 package com.jpwmii.gameObjects;
 
 import java.awt.*;
-import java.io.IOException;
 
 public abstract class AnimatedGameObject extends GameObject{
 
     protected Image[] frames;
-    private int currentFrame = 0;
+    protected int currentFrame = 0;
 
     public AnimatedGameObject(int x, int y, int width, int height, Image[] frames) {
-        super(x, y, width, height, (Image) null);
+        super(x, y, width, height, null);
         this.frames = frames;
     }
 

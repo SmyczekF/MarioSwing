@@ -3,10 +3,7 @@ package com.jpwmii;
 import com.jpwmii.gameCollidableObjects.CollidableGameObject;
 import com.jpwmii.gameCollidableObjects.Hole;
 import com.jpwmii.gameCollidableObjects.Pipe;
-import com.jpwmii.gameObjects.AnimatedGameObject;
-import com.jpwmii.gameObjects.Coin;
-import com.jpwmii.gameObjects.GameObject;
-import com.jpwmii.gameObjects.Mushroom;
+import com.jpwmii.gameObjects.*;
 import com.jpwmii.interfaceObjects.Heart;
 
 import javax.swing.*;
@@ -23,16 +20,22 @@ import java.util.Objects;
 
 public class GamePanel extends JComponent implements ActionListener, KeyListener {
     private final Timer timer;
+    private final Timer immunityFramesTimer;
     private final Image backgroundImage;
     private final Image floorTexture;
     private final Player player;
     private final ArrayList<GameObject> gameObjects = new ArrayList<>();
     private final ArrayList<AnimatedGameObject> animatedGameObjects = new ArrayList<>();
+    private final ArrayList<Enemy> enemies = new ArrayList<>();
     private int backgroundX = 0; // X-coordinate of the background
     private int floorX = 0; // Y-coordinate of the floor
     private final ArrayList<CollidableGameObject> collidableGameObjects = new ArrayList<>();
     private final ArrayList<Heart> hearts = new ArrayList<>();
     private final Image[] coinFrames = new Image[6];
+    private boolean collisionRight = false;
+    private boolean collisionLeft = false;
+    private boolean recentlyLostLife = false;
+    private boolean marioVisible = true;
 
     public void loadCoinFrames(java.net.URL imageUrl) throws IOException {
         BufferedImage coinImage = javax.imageio.ImageIO.read(imageUrl);
@@ -56,15 +59,17 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
         hearts.add(new Heart(10, 20));
         hearts.add(new Heart(70, 20));
         hearts.add(new Heart(130, 20));
-        animatedGameObjects.add(new Coin(300, 430, coinFrames));
-        animatedGameObjects.add(new Coin(360, 430, coinFrames));
-        animatedGameObjects.add(new Coin(420, 430, coinFrames));
-        animatedGameObjects.add(new Coin(480, 430, coinFrames));
-        collidableGameObjects.add(new Hole(550, 150));
+//        animatedGameObjects.add(new Coin(300, 430, coinFrames));
+//        animatedGameObjects.add(new Coin(360, 430, coinFrames));
+//        animatedGameObjects.add(new Coin(420, 430, coinFrames));
+//        animatedGameObjects.add(new Coin(480, 430, coinFrames));
+//        collidableGameObjects.add(new Hole(550, 150));
+        collidableGameObjects.add(new Pipe(500, 100, 100));
+//        collidableGameObjects.add(new Pipe(1050, 100, 200));
         collidableGameObjects.add(new Pipe(900, 100, 100));
-        collidableGameObjects.add(new Pipe(1050, 100, 200));
-        collidableGameObjects.add(new Pipe(1200, 100, 300));
-        gameObjects.add(new Mushroom(200, 300));
+//        gameObjects.add(new Mushroom(200, 300));
+        enemies.add(new Enemy(700));
+
     }
 
     private void initializeObjects() {
@@ -73,6 +78,14 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
 
     public GamePanel() throws IOException {
         timer = new Timer(50, this);
+        immunityFramesTimer = new Timer(1500, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                recentlyLostLife = false;
+                immunityFramesTimer.stop();
+                player.setY(player.getCurrentGroundLevel());
+            }
+        });
         timer.start();
         addKeyListener(this);
         setFocusable(true);
@@ -123,13 +136,41 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
             animatedGameObject.draw(g);
             if(animatedGameObject.checkIntersectWithPlayer(player)) animatedGameObjectIterator.remove();
         }
+
+        collisionLeft = false;
+        collisionRight = false;
         collidableGameObjects.forEach(collidableGameObject -> {
             collidableGameObject.draw(g);
-            collidableGameObject.isNextToPlayerRight(player);
-            collidableGameObject.isNextToPlayerLeft(player);
+            if(collidableGameObject.isNextToPlayerRight(player)) collisionRight = true;
+            if(collidableGameObject.isNextToPlayerLeft(player)) collisionLeft = true;
             collidableGameObject.isBenethPlayer(player);
             collidableGameObject.isNotBeneathPlayer(player);
+
+            enemies.forEach(enemy -> {
+                if(collidableGameObject.isNextToEnemyLeft(enemy)) enemy.setWalkingLeft(false);
+                if(collidableGameObject.isNextToEnemyRight(enemy)) enemy.setWalkingLeft(true);
+            });
         });
+
+        enemies.forEach(enemy -> {
+            enemy.draw(g);
+            if(enemy.checkIntersectWithPlayer(player, recentlyLostLife)) {
+                recentlyLostLife = true;
+                immunityFramesTimer.start();
+            }
+        });
+
+        if(recentlyLostLife){
+            if(marioVisible){
+                player.setY(-200);
+                marioVisible = false;
+            }
+            else{
+                player.setY(player.getCurrentGroundLevel());
+                marioVisible = true;
+            }
+        }
+
         player.draw(g);
 
         g.drawImage(coinFrames[0], 10, 80, 50, 50, this);
@@ -161,7 +202,7 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
             resetWorld();
         }
         // Move background forward (right) when 'D' is pressed
-        if (player.isWalkingRight()) {
+        if (player.isWalkingRight() && !collisionRight) {
             backgroundX += 7;
             floorX += 7;
             if (backgroundX >= getWidth()) {
@@ -173,9 +214,10 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
             gameObjects.forEach(gameObject -> gameObject.update(gameObject.getX() - 7, gameObject.getY()));
             collidableGameObjects.forEach(collidableGameObject -> collidableGameObject.update(collidableGameObject.getX() - 7, collidableGameObject.getY()));
             animatedGameObjects.forEach(animatedGameObject -> animatedGameObject.update(animatedGameObject.getX() - 7, animatedGameObject.getY()));
+            enemies.forEach(enemy -> enemy.update(enemy.getX() - 7, enemy.getY()));
         }
         // Move background backward (left) when 'A' is pressed
-        if (player.isWalkingLeft()) {
+        if (player.isWalkingLeft() && !collisionLeft) {
             backgroundX -= 7;
             floorX -= 7;
             if (backgroundX < 0) {
@@ -187,9 +229,10 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
             gameObjects.forEach(gameObject -> gameObject.update(gameObject.getX() + 7, gameObject.getY()));
             collidableGameObjects.forEach(collidableGameObject -> collidableGameObject.update(collidableGameObject.getX() + 7, collidableGameObject.getY()));
             animatedGameObjects.forEach(animatedGameObject -> animatedGameObject.update(animatedGameObject.getX() + 7, animatedGameObject.getY()));
+            enemies.forEach(enemy -> enemy.update(enemy.getX() + 7, enemy.getY()));
         }
         animatedGameObjects.forEach(AnimatedGameObject::updateAnimation);
-
+        enemies.forEach(Enemy::move);
 
         repaint();
     }
