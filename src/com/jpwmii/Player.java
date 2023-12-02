@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.BitSet;
 
 public class Player {
@@ -76,7 +77,6 @@ public class Player {
                 }
             }
             else {
-                System.out.println(y + " " + groundLevelBig);
                 if (y >= groundLevelBig) {
                     isJumping = false;
                     y = groundLevelBig;
@@ -102,6 +102,8 @@ public class Player {
 
     public void jump() {
         if (!isJumping) {
+            if(isSmall) playEventSound("smb_jump-small.wav");
+            else playEventSound("smb_jump-super.wav");
             isJumping = true;
             jumpHeight = 20;
         }
@@ -141,7 +143,6 @@ public class Player {
     }
 
     public void setGroundLevel(int x) {
-        System.out.println(x);
         groundLevelSmall = x;
         groundLevelBig = x - 55;
     }
@@ -152,7 +153,6 @@ public class Player {
     }
 
     public int getHeight() {
-        System.out.println(isSmall);
         if(isSmall)
             return marioWidth;
         else
@@ -209,7 +209,11 @@ public class Player {
     }
 
     public void looseLife() {
-        lives--;
+        if(isSmall) lives--;
+        else {
+            isSmall = true;
+            y = groundLevelSmall;
+        }
     }
 
     public void printPlayerInfo() {
@@ -226,10 +230,27 @@ public class Player {
         System.out.println("groundLevelBig: " + groundLevelBig);
     }
 
+    public void resetLives() {
+        lives = 3;
+    }
+
     public Rectangle getBounds() {
         if(isSmall)
             return new Rectangle(x, y, marioWidth, marioWidth);
         else
             return new Rectangle(x, y, marioWidth, marioHeight);
+    }
+
+    private void playEventSound(String soundFileName) {
+        try {
+            InputStream inputStream = GamePanel.class.getResourceAsStream("resources/sound/" + soundFileName);
+            if (inputStream != null) {
+                new SoundPlayer(inputStream).play();
+            } else {
+                System.err.println("Nie udało się wczytać pliku dźwiękowego");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 }

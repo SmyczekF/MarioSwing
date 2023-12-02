@@ -3,6 +3,7 @@ package com.jpwmii;
 import com.jpwmii.gameCollidableObjects.CollidableGameObject;
 import com.jpwmii.gameCollidableObjects.Hole;
 import com.jpwmii.gameCollidableObjects.Pipe;
+import com.jpwmii.gameCollidableObjects.Platform;
 import com.jpwmii.gameObjects.*;
 import com.jpwmii.interfaceObjects.Heart;
 
@@ -14,6 +15,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Objects;
@@ -36,6 +38,9 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
     private boolean collisionLeft = false;
     private boolean recentlyLostLife = false;
     private boolean marioVisible = true;
+    private boolean marioDead = false;
+    private SoundPlayer backgroundMusicPlayer;
+    private boolean gameWon = false;
 
     public void loadCoinFrames(java.net.URL imageUrl) throws IOException {
         BufferedImage coinImage = javax.imageio.ImageIO.read(imageUrl);
@@ -54,20 +59,24 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
         floorX = 0;
         gameObjects.clear();
         collidableGameObjects.clear();
-
+        animatedGameObjects.clear();
+        enemies.clear();
+        hearts.clear();
 
         hearts.add(new Heart(10, 20));
         hearts.add(new Heart(70, 20));
         hearts.add(new Heart(130, 20));
-//        animatedGameObjects.add(new Coin(300, 430, coinFrames));
-//        animatedGameObjects.add(new Coin(360, 430, coinFrames));
-//        animatedGameObjects.add(new Coin(420, 430, coinFrames));
-//        animatedGameObjects.add(new Coin(480, 430, coinFrames));
-//        collidableGameObjects.add(new Hole(550, 150));
+        animatedGameObjects.add(new Coin(300, 430, coinFrames));
+        animatedGameObjects.add(new Coin(360, 430, coinFrames));
+        animatedGameObjects.add(new Coin(420, 430, coinFrames));
+        animatedGameObjects.add(new Coin(480, 430, coinFrames));
+        collidableGameObjects.add(new Hole(300, 150));
         collidableGameObjects.add(new Pipe(500, 100, 100));
-//        collidableGameObjects.add(new Pipe(1050, 100, 200));
+        collidableGameObjects.add(new Pipe(1050, 100, 200));
         collidableGameObjects.add(new Pipe(900, 100, 100));
-//        gameObjects.add(new Mushroom(200, 300));
+        collidableGameObjects.add(new Platform(1000, 300, 200));
+        gameObjects.add(new Mushroom(200, 300));
+        gameObjects.add(new Castle(1500));
         enemies.add(new Enemy(700));
 
     }
@@ -90,20 +99,32 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
         addKeyListener(this);
         setFocusable(true);
 
-        backgroundImage = new ImageIcon(Objects.requireNonNull(getClass().getResource("resources/background.jpg"))).getImage();
+        backgroundImage = new ImageIcon(Objects.requireNonNull(getClass().getResource("resources/images/background.jpg"))).getImage();
 
-        floorTexture = new ImageIcon(Objects.requireNonNull(getClass().getResource("resources/floor.jpg"))).getImage();
+        floorTexture = new ImageIcon(Objects.requireNonNull(getClass().getResource("resources/images/floor.jpg"))).getImage();
 
         player = new Player();
 
-        loadCoinFrames(getClass().getResource("resources/coin.png"));
+        loadCoinFrames(getClass().getResource("resources/images/coin.png"));
 
         initializeObjects();
 
         try {
-            player.loadMarioFrames(getClass().getResource("resources/mario.png"));
+            player.loadMarioFrames(getClass().getResource("resources/images/mario.png"));
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+        try {
+            InputStream inputStream = GamePanel.class.getResourceAsStream("resources/sound/soundtrack.wav");
+            if (inputStream != null) {
+                backgroundMusicPlayer = new SoundPlayer(inputStream);
+                backgroundMusicPlayer.playLoop();
+            } else {
+                System.err.println("Nie udało się wczytać pliku dźwiękowego");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -128,13 +149,22 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
         while(iterator.hasNext()){
             GameObject gameObject = iterator.next();
             gameObject.draw(g);
-            if(gameObject.checkIntersectWithPlayer(player)) iterator.remove();
+            if(gameObject.checkIntersectWithPlayer(player)) {
+                if(gameObject instanceof Castle){
+                    gameWon = true;
+                }
+                if(gameObject.getSoundFileName() != null) playEventSound(gameObject.getSoundFileName());
+                iterator.remove();
+            }
         }
         Iterator<AnimatedGameObject> animatedGameObjectIterator = animatedGameObjects.iterator();
         while(animatedGameObjectIterator.hasNext()){
             AnimatedGameObject animatedGameObject = animatedGameObjectIterator.next();
             animatedGameObject.draw(g);
-            if(animatedGameObject.checkIntersectWithPlayer(player)) animatedGameObjectIterator.remove();
+            if(animatedGameObject.checkIntersectWithPlayer(player)) {
+                if(animatedGameObject.getSoundFileName() != null) playEventSound(animatedGameObject.getSoundFileName());
+                animatedGameObjectIterator.remove();
+            }
         }
 
         collisionLeft = false;
@@ -154,7 +184,8 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
 
         enemies.forEach(enemy -> {
             enemy.draw(g);
-            if(enemy.checkIntersectWithPlayer(player, recentlyLostLife)) {
+            if(enemy.checkIntersectWithPlayer(player, recentlyLostLife) && !marioDead) {
+                playEventSound("smb_damage.wav");
                 recentlyLostLife = true;
                 immunityFramesTimer.start();
             }
@@ -188,6 +219,32 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
             g.setColor(Color.WHITE);
             g.setFont(new Font("TimesRoman", Font.PLAIN, 50));
             g.drawString("GAME OVER", getWidth() / 2 - 150, getHeight() / 2);
+            g.drawString("Press 'R' to restart", getWidth() / 2 - 200, getHeight() / 2 + 50);
+        }
+
+        if (gameWon) {
+            backgroundMusicPlayer.stopLoop();
+
+            Color startColor = Color.BLUE;
+            Color endColor = Color.YELLOW;
+
+            // Create a gradient paint from blue to yellow
+            GradientPaint gradientPaint = new GradientPaint(0, 0, startColor, 0, getHeight(), endColor);
+
+            // Set the paint to the graphics context
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setPaint(gradientPaint);
+
+            // Fill the entire background with the gradient
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+
+            // Continue with the rest of your drawing code
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("TimesRoman", Font.PLAIN, 50));
+            g.drawString("YOU WON!", getWidth() / 2 - 150, getHeight() / 2 - 100);
+            g.drawString("Score: " + player.getCoins(), getWidth() / 2 - 150, getHeight() / 2 + -25);
+            g.drawImage(coinFrames[0], getWidth() / 2 + 70, getHeight() / 2 - 70, 50, 50, this);
+            g.drawString("Press 'R' to restart", getWidth() / 2 - 215, getHeight() / 2 + 80);
         }
     }
 
@@ -197,10 +254,15 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
         player.updateAnimation();
 
         if(player.getY() > 600){
-            System.out.println(player.getY());
             player.death();
             resetWorld();
         }
+        if(player.getLives() == 0 && !marioDead){
+            backgroundMusicPlayer.stopLoop();
+            playEventSound("smb_mariodie.wav");
+            marioDead = true;
+        }
+
         // Move background forward (right) when 'D' is pressed
         if (player.isWalkingRight() && !collisionRight) {
             backgroundX += 7;
@@ -250,11 +312,33 @@ public class GamePanel extends JComponent implements ActionListener, KeyListener
     @Override
     public void keyReleased(KeyEvent e) {
         // Handle key releases, e.g., stop character movement
-        player.handleKeyRelease(e.getKeyCode());
+        if(e.getKeyCode() == KeyEvent.VK_R){
+            backgroundMusicPlayer.stopLoop();
+            player.death();
+            player.resetLives();
+            backgroundMusicPlayer.startLoop();
+            resetWorld();
+            marioDead = false;
+            gameWon = false;
+        }
+        else player.handleKeyRelease(e.getKeyCode());
     }
 
     @Override
     public Dimension getPreferredSize() {
         return new Dimension(800, 600); // Set the preferred size of your panel
+    }
+
+    private void playEventSound(String soundFileName) {
+        try {
+            InputStream inputStream = GamePanel.class.getResourceAsStream("resources/sound/" + soundFileName);
+            if (inputStream != null) {
+                new SoundPlayer(inputStream).play();
+            } else {
+                System.err.println("Nie udało się wczytać pliku dźwiękowego");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 }

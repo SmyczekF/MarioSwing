@@ -10,12 +10,23 @@ public abstract class GameObject {
     protected int width;
     protected int height;
     protected Image image;
+    private String soundFileName;
+
     public GameObject(int x, int y, int width, int height, Image image) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.image = image;
+    }
+
+    public GameObject(int x, int y, int width, int height, Image image, String soundFileName) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.image = image;
+        this.soundFileName = soundFileName;
     }
 
     public void draw(Graphics g) {
@@ -51,6 +62,14 @@ public abstract class GameObject {
 
     public int getY() {
         return y;
+    }
+
+    public String getSoundFileName() {
+        return soundFileName;
+    }
+
+    public void setSoundFileName(String soundFileName) {
+        this.soundFileName = soundFileName;
     }
 
     // Other methods, getters, and setters as needed

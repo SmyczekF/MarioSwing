@@ -8,7 +8,7 @@ import java.util.Objects;
 
 public class Hole extends CollidableGameObject{
     public Hole(int x, int width) {
-        super(x, 488, width, 200, new ImageIcon(Objects.requireNonNull(Hole.class.getResource("../resources/hole.jpg"))).getImage());
+        super(x, 488, width, 200, new ImageIcon(Objects.requireNonNull(Hole.class.getResource("../resources/images/hole.jpg"))).getImage());
     }
 
     @Override

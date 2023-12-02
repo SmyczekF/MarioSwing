@@ -44,7 +44,6 @@ public abstract class CollidableGameObject extends GameObject {
     public void isNotBeneathPlayer(Player player) {
         if(isBenethPlayer){
             if(player.getBounds() != null && !player.getBounds().intersects(new Rectangle(x, y - 50, width, 50))) {
-                System.out.println("not beneath");
                 player.setIsJumping(true);
                 player.resetGroundLevel();
                 isBenethPlayer = false;

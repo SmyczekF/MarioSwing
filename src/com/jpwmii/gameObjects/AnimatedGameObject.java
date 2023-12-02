@@ -12,6 +12,11 @@ public abstract class AnimatedGameObject extends GameObject{
         this.frames = frames;
     }
 
+    public AnimatedGameObject(int x, int y, int width, int height, Image[] frames, String soundFileName) {
+        super(x, y, width, height, null, soundFileName);
+        this.frames = frames;
+    }
+
     @Override
     public void draw(Graphics g) {
         g.drawImage(frames[currentFrame], x, y, width, height, null);

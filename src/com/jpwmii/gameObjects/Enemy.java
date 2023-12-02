@@ -10,7 +10,7 @@ public class Enemy extends GameObject{
     private boolean isWalkingLeft = true;
 
     public Enemy(int x) {
-        super(x, 440, 50, 50, new ImageIcon(Objects.requireNonNull(Enemy.class.getResource("../resources/goomba.gif"))).getImage());
+        super(x, 440, 50, 50, new ImageIcon(Objects.requireNonNull(Enemy.class.getResource("../resources/images/goomba.gif"))).getImage());
     }
 
     public boolean checkIntersectWithPlayer(Player player, boolean RecentlyLostLife){

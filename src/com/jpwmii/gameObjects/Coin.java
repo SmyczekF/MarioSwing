@@ -7,7 +7,7 @@ import java.awt.*;
 public class Coin extends AnimatedGameObject {
 
     public Coin(int x, int y, Image[] frames) {
-        super(x, y, 40, 40, frames);
+        super(x, y, 40, 40, frames, "smb_coin.wav");
     }
 
     @Override
