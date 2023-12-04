@@ -8,7 +8,7 @@ import java.awt.*;
 
 public abstract class CollidableGameObject extends GameObject {
 
-    private boolean isBenethPlayer = false;
+    protected boolean isBenethPlayer = false;
 
     public CollidableGameObject(int x, int y, int width, int height, Image image) {
         super(x, y, width, height, image);

@@ -30,9 +30,13 @@ public class Hole extends CollidableGameObject{
         if(player.getBounds() != null && player.getBounds().intersects(new Rectangle(x + 40, y - 7, width - 80, height))) {
             player.setIsJumping(true);
             player.setGroundLevel(800);
+            isBenethPlayer = true;
         }
-        else {
-            player.resetGroundLevel();
+        if(isBenethPlayer){
+            if(player.getBounds() != null && !player.getBounds().intersects(new Rectangle(x + 40, y - 7, width - 80, height))) {
+                player.resetGroundLevel();
+                isBenethPlayer = false;
+            }
         }
     }
 }
